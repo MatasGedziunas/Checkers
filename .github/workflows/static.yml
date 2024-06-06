@@ -24,6 +24,10 @@ jobs:
       - name: Build
         run: npm run build  # Make sure this script is defined in your package.json
         working-directory: frontend
+        
+      - name: List files in the build directory for debugging
+        run: ls -la
+        working-directory: frontend/dist
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
