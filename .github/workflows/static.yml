@@ -27,7 +27,7 @@ jobs:
         
       - name: List files in the build directory for debugging
         run: ls -la
-        working-directory: frontend/dist
+        working-directory: frontend
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
