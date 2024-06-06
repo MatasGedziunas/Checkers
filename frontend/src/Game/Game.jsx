@@ -8,45 +8,43 @@ import "./Game.css";
 
 function Game() {
   const functionality = new GameFunctionality();
-  const [board, setBoard] = useState(functionality.getStartingBoard());
+  // const [board, setBoard] = useState(functionality.getStartingBoard());
+  // const [board, setBoard] = useState(functionality.getCapturesBoard());
+  const [board, setBoard] = useState(functionality.getDoubleCapturesBoard());
   const [possibleMoves, setPossibleMoves] = useState([]);
-  const [mustCapture, setMustCapture] = useState(false);
-
+  const [turn, setTurn] = useState("w");
   const refs = useRef({});
 
   function updatePossibleMoves() {
     let newPossibleMoves = [];
-    let newMustCapture = false;
+    let maxCaptureCount = 0;
 
     for (let i = 0; i < board.length; i++) {
       newPossibleMoves.push([]);
       for (let j = 0; j < board[i].length; j++) {
-        if (board[i][j] == ".") {
+        if (board[i][j] == "." || board[i][j][0] != turn) {
           newPossibleMoves[i].push([]);
         } else {
           const temp = functionality.getPossibleMoves(board, i, j);
-          if (temp.isCaptures) {
-            newMustCapture = true;
-          }
+          maxCaptureCount = Math.max(maxCaptureCount, temp.captureCount);
           newPossibleMoves[i].push({
             cords: temp.moves,
-            isCaptures: temp.isCaptures,
+            captureCount: temp.captureCount,
           });
         }
       }
     }
-    if (newMustCapture) {
+    if (maxCaptureCount > 0) {
       for (let i = 0; i < newPossibleMoves.length; i++) {
         let row = newPossibleMoves[i];
         row.forEach((possibleMove) => {
-          if (possibleMove.isCaptures == false) {
+          if (possibleMove.captureCount != maxCaptureCount) {
             possibleMove.cords = [];
           }
         });
       }
     }
     setPossibleMoves(newPossibleMoves);
-    setMustCapture(newMustCapture);
   }
 
   useEffect(() => {
@@ -120,6 +118,9 @@ function Game() {
                     ) : (
                       ""
                     )}
+                    <p>
+                      {rowIndex} {cellIndex}
+                    </p>
                   </div>
                 );
               })}

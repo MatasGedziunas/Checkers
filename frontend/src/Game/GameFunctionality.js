@@ -1,40 +1,29 @@
+import Boards from "./boards";
+
 class GameFunctionality {
-  constructor() {}
+  constructor(logging) {
+    if (logging == undefined) {
+      logging = false;
+    }
+    this.logging = logging;
+  }
+
+  log(string) {
+    if (this.logging) {
+      console.log(string);
+    }
+  }
 
   getStartingBoard() {
-    const size = 10;
-    let board = Array.from({ length: size }, () => Array(size).fill("."));
+    return Boards.startingBoard;
+  }
 
-    // Place black pieces
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < size; j++) {
-        if ((i + j) % 2 === 1) {
-          board[i][j] = "b";
-        }
-      }
-    }
+  getCapturesBoard() {
+    return Boards.capturesBoard;
+  }
 
-    // Place white pieces
-    for (let i = size - 1; i >= size - 4; i--) {
-      for (let j = 0; j < size; j++) {
-        if ((i + j) % 2 === 1) {
-          board[i][j] = "w";
-        }
-      }
-    }
-    board = [
-      [".", "b", ".", "b", ".", "b", ".", "b", ".", "."],
-      ["b", ".", "b", ".", "b", ".", "b", ".", "b", "."],
-      [".", ".", ".", "b", ".", "b", ".", ".", ".", "b"],
-      [".", ".", "b", ".", ".", ".", "b", ".", ".", "."],
-      [".", ".", ".", "w", ".", "w", ".", ".", ".", "."],
-      [".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
-      ["w", ".", "w", ".", "w", ".", "w", ".", "w", "."],
-      [".", "w", ".", "w", ".", "w", ".", "w", ".", "w"],
-      [".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
-      ["w", ".", "w", ".", "w", ".", "w", ".", "w", "."],
-    ];
-    return board;
+  getDoubleCapturesBoard() {
+    return Boards.doubleCapturesBoard;
   }
 
   encodeBoard(board) {
@@ -52,7 +41,7 @@ class GameFunctionality {
     let board = [[]];
     let i = 0;
     let j = 0;
-    while (i < boardString.length) {
+    while (i < boardString.length - 1) {
       if (boardString[i] == " ") {
         board.push([]);
         j += 1;
@@ -61,10 +50,10 @@ class GameFunctionality {
       }
       i += 1;
     }
+    return board;
   }
 
   getPossibleMoves(board, row, col) {
-    console.log(`possible moves for row ${row} col ${col}`);
     if (board[row][col] == ".") {
       return {
         isCaptures: false,
@@ -100,15 +89,12 @@ class GameFunctionality {
       }
     }
     if (captures.length > 0) {
-      let captureMoves = this.getMaxCaptureCountMoves(captures);
-      return {
-        isCaptures: true,
-        moves: captureMoves,
-      };
+      return this.getMaxCaptureCountMoves(captures);
+      // returns same structure object as else block (with captureCount)
     } else {
       return {
-        isCaptures: false,
-        moves: this.getNonCaptureMoves(board, row, col, directionRow),
+        captureCount: 0,
+        cords: this.getNonCaptureMoves(board, row, col, directionRow),
       };
     }
   }
@@ -121,25 +107,47 @@ class GameFunctionality {
     colToBeCaptured,
     capturesCount
   ) {
+    this.log(
+      `In row ${row} ; col ${col}. Trying to capture row ${rowToBeCaptured} ; col ${colToBeCaptured} ; piece ${
+        this.isInBounds(board, rowToBeCaptured, colToBeCaptured)
+          ? board[rowToBeCaptured][colToBeCaptured]
+          : "out of bounds"
+      }`
+    );
     if (this.canBeCaptured(board, row, col, rowToBeCaptured, colToBeCaptured)) {
+      this.log(
+        `Capturing row ${rowToBeCaptured} ; col ${colToBeCaptured} ; piece ${
+          this.isInBounds(board, rowToBeCaptured, colToBeCaptured)
+            ? board[rowToBeCaptured][colToBeCaptured]
+            : "out of bounds"
+        }`
+      );
       let newBoard = this.cloneBoard(board);
-      newBoard[rowToBeCaptured][colToBeCaptured] = ".";
       let rowAfterCapture = rowToBeCaptured + rowToBeCaptured - row;
       let colAfterCapture = colToBeCaptured + colToBeCaptured - col;
+      newBoard[rowToBeCaptured][colToBeCaptured] = ".";
+      newBoard[row][col] = ".";
+      newBoard[rowAfterCapture][colAfterCapture] = board[row][col];
       let directions = [-1, 1];
+      const startingCapturesCount = capturesCount;
       for (let rowDirection of directions) {
         for (let colDirection of directions) {
-          capturesCount = this.getCaptures(
+          this.log(` captures count in loop: ${capturesCount}`);
+          let tempCapturesCount = this.getCaptures(
             newBoard,
             rowAfterCapture,
             colAfterCapture,
             rowAfterCapture + rowDirection,
             colAfterCapture + colDirection,
-            capturesCount + 1
+            startingCapturesCount + 1
           );
+          if (tempCapturesCount > capturesCount) {
+            capturesCount = tempCapturesCount;
+          }
         }
       }
     }
+    this.log(` captures count ${capturesCount}`);
     return capturesCount;
   }
 
@@ -148,15 +156,16 @@ class GameFunctionality {
     captures.forEach((capture) => {
       maxCaptureCount = Math.max(maxCaptureCount, capture.capturesCount);
     });
+    console.log(captures);
+    console.log(`Max capture count ${maxCaptureCount}`);
     captures = captures.filter(
       (capture) => capture.capturesCount == maxCaptureCount
     );
-    console.log(captures);
     let moves = [];
     for (let capture of captures) {
       moves.push(capture.move);
     }
-    return moves;
+    return { cords: moves, captureCount: maxCaptureCount };
   }
 
   getNonCaptureMoves(board, row, col, directionRow) {
