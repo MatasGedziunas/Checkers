@@ -15,24 +15,28 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'  # Or the version your project requires
+          node-version: "14" # Or the version your project requires
 
       - name: Install dependencies
         run: npm install
         working-directory: frontend
 
       - name: Build
-        run: npm run build  # Make sure this script is defined in your package.json
+        run: npm run build # Make sure this script is defined in your package.json
         working-directory: frontend
-        
+
       - name: List files in the build directory for debugging
         run: ls -la
         working-directory: frontend
 
+      - name: List files in the build src directory for debugging
+        run: ls -la
+        working-directory: frontend/src
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'frontend/dist'  # The output directory of your build step
+          path: "frontend/dist" # The output directory of your build step
 
       - name: Deploy to GitHub Pages
         id: deployment
