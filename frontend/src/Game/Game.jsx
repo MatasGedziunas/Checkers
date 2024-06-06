@@ -15,7 +15,7 @@ function Game() {
   const refs = useRef({});
 
   function updatePossibleMoves() {
-    const newPossibleMoves = [];
+    let newPossibleMoves = [];
     let newMustCapture = false;
 
     for (let i = 0; i < board.length; i++) {
@@ -24,21 +24,27 @@ function Game() {
         if (board[i][j] == ".") {
           newPossibleMoves[i].push([]);
         } else {
-          const temp = functionality.showPossibleMoves(board, i, j);
+          const temp = functionality.getPossibleMoves(board, i, j);
           if (temp.isCaptures) {
             newMustCapture = true;
           }
-          if (newMustCapture && temp.isCaptures) {
-            newPossibleMoves[i].push(temp.moves);
-          } else if (!newMustCapture) {
-            newPossibleMoves[i].push(temp.moves);
-          } else {
-            newPossibleMoves[i].push([]);
-          }
+          newPossibleMoves[i].push({
+            cords: temp.moves,
+            isCaptures: temp.isCaptures,
+          });
         }
       }
     }
-
+    if (newMustCapture) {
+      for (let i = 0; i < newPossibleMoves.length; i++) {
+        let row = newPossibleMoves[i];
+        row.forEach((possibleMove) => {
+          if (possibleMove.isCaptures == false) {
+            possibleMove.cords = [];
+          }
+        });
+      }
+    }
     setPossibleMoves(newPossibleMoves);
     setMustCapture(newMustCapture);
   }
@@ -51,8 +57,11 @@ function Game() {
     const possibleMoveImages = document.querySelectorAll(".possible-move");
     possibleMoveImages.forEach((img) => img.remove());
     let checkerPossibleMoves = possibleMoves[row][col];
+    if (!checkerPossibleMoves.cords) {
+      return;
+    }
     console.log(checkerPossibleMoves);
-    for (let move of checkerPossibleMoves) {
+    for (let move of checkerPossibleMoves.cords) {
       addPossibleMoveChecker(move[0], move[1], board[row][col]);
     }
   }

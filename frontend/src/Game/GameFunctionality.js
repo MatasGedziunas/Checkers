@@ -22,7 +22,18 @@ class GameFunctionality {
         }
       }
     }
-
+    board = [
+      [".", "b", ".", "b", ".", "b", ".", "b", ".", "."],
+      ["b", ".", "b", ".", "b", ".", "b", ".", "b", "."],
+      [".", ".", ".", "b", ".", "b", ".", ".", ".", "b"],
+      [".", ".", "b", ".", ".", ".", "b", ".", ".", "."],
+      [".", ".", ".", "w", ".", "w", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
+      ["w", ".", "w", ".", "w", ".", "w", ".", "w", "."],
+      [".", "w", ".", "w", ".", "w", ".", "w", ".", "w"],
+      [".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
+      ["w", ".", "w", ".", "w", ".", "w", ".", "w", "."],
+    ];
     return board;
   }
 
@@ -52,85 +63,136 @@ class GameFunctionality {
     }
   }
 
-  showPossibleMoves(board, row, col) {
-    let directionY;
+  getPossibleMoves(board, row, col) {
+    console.log(`possible moves for row ${row} col ${col}`);
     if (board[row][col] == ".") {
       return {
         isCaptures: false,
         moves: [],
       };
     }
+    let directionRow;
     if (board[row][col][0] == "b") {
-      directionY = 1;
+      directionRow = 1;
     } else {
-      directionY = -1;
+      directionRow = -1;
     }
-    let possibleMoves = [];
+
     let captures = [];
-    if (
-      this.isInBounds(board, row, col, 1, directionY) &&
-      board[row + directionY][col + 1] == "." &&
-      captures.length == 0
-    ) {
-      possibleMoves.push([row + directionY, col + 1]);
-    } else if (this.canBeCaptured(board, row, col, row + directionY, col + 1)) {
-      captures.push([row + directionY, col + 1]);
-    }
-    if (
-      this.isInBounds(board, row, col, -1, directionY) &&
-      board[row + directionY][col - 1] == "." &&
-      captures.length == 0
-    ) {
-      possibleMoves.push([row + directionY, col - 1]);
-    } else if (this.canBeCaptured(board, row, col, row + directionY, col - 1)) {
-      captures.push([row + directionY, col - 1]);
-    }
-    if (
-      this.isInBounds(board, row, col, +1, -directionY) &&
-      this.canBeCaptured(board, row - directionY, col + 1)
-    ) {
-      captures.push([row - directionY, col + 1]);
-    }
-    if (
-      this.isInBounds(board, row, col, -1, -directionY) &&
-      this.canBeCaptured(board, row - directionY, col - 1)
-    ) {
-      captures.push([row - directionY, col - 1]);
+    let directions = [-1, 1];
+
+    for (let rowDirection of directions) {
+      for (let colDirection of directions) {
+        let capturesCount = this.getCaptures(
+          board,
+          row,
+          col,
+          row + rowDirection,
+          col + colDirection,
+          0
+        );
+        if (capturesCount > 0) {
+          captures.push({
+            capturesCount: capturesCount,
+            move: [row + 2 * rowDirection, col + 2 * colDirection],
+          });
+        }
+      }
     }
     if (captures.length > 0) {
-      console.log(captures.length);
+      let captureMoves = this.getMaxCaptureCountMoves(captures);
       return {
         isCaptures: true,
-        moves: captures,
+        moves: captureMoves,
       };
     } else {
-      console.log(possibleMoves.length);
       return {
         isCaptures: false,
-        moves: possibleMoves,
+        moves: this.getNonCaptureMoves(board, row, col, directionRow),
       };
     }
   }
 
-  isInBounds(board, row, col, directionX, directionY) {
-    return (
-      row + directionY >= 0 &&
-      row + directionY < board.length &&
-      col + directionX >= 0 &&
-      col + directionX < board[0].length
+  getCaptures(
+    board,
+    row,
+    col,
+    rowToBeCaptured,
+    colToBeCaptured,
+    capturesCount
+  ) {
+    if (this.canBeCaptured(board, row, col, rowToBeCaptured, colToBeCaptured)) {
+      let newBoard = this.cloneBoard(board);
+      newBoard[rowToBeCaptured][colToBeCaptured] = ".";
+      let rowAfterCapture = rowToBeCaptured + rowToBeCaptured - row;
+      let colAfterCapture = colToBeCaptured + colToBeCaptured - col;
+      let directions = [-1, 1];
+      for (let rowDirection of directions) {
+        for (let colDirection of directions) {
+          capturesCount = this.getCaptures(
+            newBoard,
+            rowAfterCapture,
+            colAfterCapture,
+            rowAfterCapture + rowDirection,
+            colAfterCapture + colDirection,
+            capturesCount + 1
+          );
+        }
+      }
+    }
+    return capturesCount;
+  }
+
+  getMaxCaptureCountMoves(captures) {
+    let maxCaptureCount = 0;
+    captures.forEach((capture) => {
+      maxCaptureCount = Math.max(maxCaptureCount, capture.capturesCount);
+    });
+    captures = captures.filter(
+      (capture) => capture.capturesCount == maxCaptureCount
     );
+    console.log(captures);
+    let moves = [];
+    for (let capture of captures) {
+      moves.push(capture.move);
+    }
+    return moves;
+  }
+
+  getNonCaptureMoves(board, row, col, directionRow) {
+    let possibleMoves = [];
+    let directions = [-1, 1];
+    for (let directionCol of directions) {
+      let rowAfterMove = row + directionRow;
+      let colAfterMove = col + directionCol;
+      if (
+        this.isInBounds(board, rowAfterMove, colAfterMove) &&
+        board[rowAfterMove][colAfterMove] == "."
+      ) {
+        possibleMoves.push([rowAfterMove, colAfterMove]);
+      }
+    }
+    return possibleMoves;
+  }
+
+  isInBounds(board, row, col) {
+    return row >= 0 && row < board.length && col >= 0 && col < board[0].length;
   }
 
   canBeCaptured(board, rowFrom, colFrom, rowTo, colTo) {
-    const directionY = rowTo - rowFrom;
-    const directionX = colTo - colFrom;
+    const directionRow = rowTo - rowFrom;
+    const directionCol = colTo - colFrom;
     return (
-      this.isInBounds(board, rowTo, colTo, directionX, directionY) &&
+      this.isInBounds(board, rowTo + directionRow, colTo + directionCol) &&
       board[rowTo][colTo] != "." &&
       board[rowFrom][colFrom] != "." &&
       board[rowFrom][colFrom][0] !== board[rowTo][colTo][0] && // pieces not same color
-      board[rowTo + directionY][colTo + directionX] === "."
+      board[rowTo + directionRow][colTo + directionCol] === "."
     );
+  }
+
+  cloneBoard(arr) {
+    return arr.map((innerArr) => innerArr.slice());
   }
 }
 
