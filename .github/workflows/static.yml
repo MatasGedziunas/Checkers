@@ -22,6 +22,7 @@ jobs:
 
       - name: Build
         run: npm run build  # Make sure this script is defined in your package.json
+        working-directory: frontend
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
