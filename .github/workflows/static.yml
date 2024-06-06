@@ -19,6 +19,7 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: frontend
 
       - name: Build
         run: npm run build  # Make sure this script is defined in your package.json
