@@ -13,6 +13,8 @@ function Game() {
   const [board, setBoard] = useState(functionality.getDoubleCapturesBoard());
   const [possibleMoves, setPossibleMoves] = useState([]);
   const [turn, setTurn] = useState("w");
+  const [lastClickedSquare, setLastClickedSquare] = useState([]);
+
   const refs = useRef({});
 
   function updatePossibleMoves() {
@@ -28,7 +30,7 @@ function Game() {
           const temp = functionality.getPossibleMoves(board, i, j);
           maxCaptureCount = Math.max(maxCaptureCount, temp.captureCount);
           newPossibleMoves[i].push({
-            cords: temp.moves,
+            cords: temp.cords,
             captureCount: temp.captureCount,
           });
         }
@@ -48,25 +50,63 @@ function Game() {
   }
 
   useEffect(() => {
+    console.log("updating posssible moves");
     updatePossibleMoves();
   }, [board]);
 
-  function handleCheckerClick(row, col) {
+  function handleCheckerClick(e, row, col) {
+    const cellClicked = e.target.closest(".cell"); // Ensure you get the .cell div even if the target is an inner element
+    if (cellClicked.querySelector("img.possible-move")) {
+      removeAllPossibleMoveCheckers();
+      const coordinates = lastClickedSquare.getAttribute("data-key").split("-");
+      makeMove(parseInt(coordinates[0]), parseInt(coordinates[1]), row, col);
+    } else {
+      removeAllPossibleMoveCheckers();
+      addPossibleMoveCheckers(row, col);
+    }
+
+    setLastClickedSquare(cellClicked);
+  }
+
+  function removeAllPossibleMoveCheckers() {
     const possibleMoveImages = document.querySelectorAll(".possible-move");
     possibleMoveImages.forEach((img) => img.remove());
-    let checkerPossibleMoves = possibleMoves[row][col];
-    if (!checkerPossibleMoves.cords) {
-      return;
+  }
+
+  function makeMove(rowFrom, colFrom, rowTo, colTo) {
+    // database stuff validations etc.
+    const directionRow = Math.sign(rowTo - rowFrom);
+    const directionCol = Math.sign(colTo - colFrom);
+    const checkerColorToRemove = board[rowFrom][colFrom] == "w" ? "b" : "w";
+    board[rowTo][colTo] = board[rowFrom][colFrom];
+    board[rowFrom][colFrom] = ".";
+    let curRow = rowFrom + directionRow;
+    let curCol = colFrom + directionCol;
+    while (
+      functionality.isInBounds(board, curRow, curCol) &&
+      curRow != rowTo &&
+      curCol != colTo
+    ) {
+      if (board[curRow][curCol][0] == checkerColorToRemove) {
+        board[curRow][curCol] = ".";
+      }
+      curRow += directionRow;
+      curCol += directionCol;
     }
-    console.log(checkerPossibleMoves);
-    for (let move of checkerPossibleMoves.cords) {
-      addPossibleMoveChecker(move[0], move[1], board[row][col]);
+    if (directionRow == rowTo - rowFrom) {
+      setTurn(turn == "w" ? "b" : "w");
     }
   }
 
-  function addPossibleMoveChecker(row, col, checker) {
-    const key = `${row}-${col}`;
-    if (refs.current[key]) {
+  function addPossibleMoveCheckers(row, col) {
+    const checker = board[row][col];
+    let checkerPossibleMoves = possibleMoves[row][col];
+    console.log(checkerPossibleMoves);
+    if (!checkerPossibleMoves.cords) {
+      return;
+    }
+    for (let move of checkerPossibleMoves.cords) {
+      const key = `${move[0]}-${move[1]}`;
       const img = document.createElement("img");
       img.src = getCheckerImage(checker);
       img.alt = "Possible move";
@@ -105,7 +145,8 @@ function Game() {
                     className={`cell ${
                       (rowIndex + cellIndex) % 2 === 0 ? "white" : "black"
                     }`}
-                    onClick={() => handleCheckerClick(rowIndex, cellIndex)}
+                    data-key={key}
+                    onClick={(e) => handleCheckerClick(e, rowIndex, cellIndex)}
                   >
                     {cell === "b" ? (
                       <img src={bMSvg} alt="Black piece" />

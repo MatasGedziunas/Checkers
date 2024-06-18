@@ -156,8 +156,8 @@ class GameFunctionality {
     captures.forEach((capture) => {
       maxCaptureCount = Math.max(maxCaptureCount, capture.capturesCount);
     });
-    console.log(captures);
-    console.log(`Max capture count ${maxCaptureCount}`);
+    this.log(captures);
+    this.log(`Max capture count ${maxCaptureCount}`);
     captures = captures.filter(
       (capture) => capture.capturesCount == maxCaptureCount
     );
