@@ -7,42 +7,31 @@ on:
     branches: ["master"]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16.x]
-    defaults:
-      working-directory: frontend
+        node-version: [14.x, 16.x, 18.x]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+        # No need for working-directory here
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
 
       - name: Verify Node.js installation
         run: |
           node -v
           npm -v
-
-      - name: List files in base directory
-        run: |
-          echo "Base directory: $(pwd)"
-          ls -la
-
-      - name: List files in frontend directory
-        run: |
-          cd frontend
-          echo "Frontend directory: $(pwd)"
-          ls -la
-
-      - name: Install dependencies
-        run: npm ci
         working-directory: frontend
 
       - name: Build project
@@ -52,15 +41,11 @@ jobs:
       - name: Run tests
         run: npm test
         working-directory: frontend
-    document:
-      needs: test
-      runs-on: ubuntu-latest
 
-      steps:
-        - name: Deploy with gh-pages
-          run: |
-            git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-            npx gh-pages -d build -u "github-actions-bot <support+actions@github.com>"
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          working-directory: frontend
+      - name: Deploy with gh-pages
+        run: |
+          git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          npx gh-pages -d build -u "github-actions-bot <support+actions@github.com>"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: frontend
