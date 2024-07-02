@@ -38,6 +38,10 @@ let Boards = {
   ],
   startingBoardString:
     ".b.b.b.b.b b.b.b.b.b. .b.b.b.b.b b.b.b.b.b. .......... .......... .w.w.w.w.w w.w.w.w.w. .w.w.w.w.w w.w.w.w.w. ",
+  capturesBoardString:
+    ".b.b.b.b.b b.b.b.b.b. .b.b.b.b.b b.b.b.b.b. .......... ....b..... .b.w...w.. .w...w.... .b........ w.w.w.w.w. ",
+  emptyBoardString:
+    ".......... .......... .......... .......... .......... .......... .......... .......... .......... .......... ",
 };
 
 export default Boards;

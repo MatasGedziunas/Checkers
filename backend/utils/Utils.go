@@ -8,7 +8,7 @@ func GetTileColor(row int, col int) string {
 	}
 }
 
-func IsInBounds(boardSize int, row int, col int) bool {
+func IsInBounds(row int, col int, boardSize int) bool {
 	return (row >= 0 && row < boardSize &&
 		col >= 0 && col < boardSize)
 }

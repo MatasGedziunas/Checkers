@@ -6,6 +6,10 @@ func GetStartingBoard() string {
 	return StartingBoard
 }
 
+func GetCapturesBoard() string {
+	return CapturesBoard
+}
+
 func DecodeBoard(boardString string) models.Board {
 	return models.NewBoard(boardString)
 }

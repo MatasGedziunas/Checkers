@@ -2,24 +2,27 @@ package models
 
 import (
 	"strings"
+
+	"github.com/MatasGedziunas/Checkers.git/utils"
 )
 
 type Board struct {
-	Pieces [][]Checker
+	Pieces    [][]Tile
+	boardSize int
 }
 
 func NewBoard(boardString string) Board {
 	board := strings.Split(boardString, " ")
-	var pieces [][]Checker
-	var row []Checker
+	var pieces [][]Tile
+	var row []Tile
 	curRow := 0
 	for curRow < len(board)-1 {
-		row = []Checker{}
+		row = []Tile{}
 		curStr := 0
 		for curStr < len(board[curRow]) {
-			var piece Checker
+			var piece Tile
 			if board[curRow][curStr] == '.' {
-				piece = NewEmptyChecker(curRow, len(row))
+				piece = NewEmptyTile(curRow, len(row))
 			} else if len(board[curRow]) < curStr+1 && board[curRow][curStr+1] == 'q' {
 				piece = NewQueen(curRow, len(row), string(board[curRow][curStr]))
 				curStr += 1
@@ -32,7 +35,8 @@ func NewBoard(boardString string) Board {
 		pieces = append(pieces, row)
 		curRow += 1
 	}
-	return Board{pieces}
+	return Board{Pieces: pieces,
+		boardSize: len(row)}
 }
 
 func (board *Board) EncodeBoard() string {
@@ -51,4 +55,14 @@ func (board *Board) EncodeBoard() string {
 		sb.WriteByte(' ')
 	}
 	return sb.String()
+}
+
+func (board *Board) GetChecker(row int, col int) *Tile {
+	if utils.IsInBounds(row, col, board.boardSize) {
+		return &board.Pieces[row][col]
+	} else {
+		// log.Printf("Trying to get out of bounds checker: row %v ; col %v", row, col)
+		tempTile := NewEmptyTile(0, 0)
+		return &tempTile
+	}
 }

@@ -5,14 +5,22 @@ import bKSvg from "../assets/bK.svg";
 import wMSvg from "../assets/wM.svg";
 import wKSvg from "../assets/wK.svg";
 import "./Game.css";
+import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 function Game() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const functionality = new GameFunctionality();
   // const [board, setBoard] = useState(functionality.getStartingBoard());
-  const [board, setBoard] = useState(functionality.getCapturesBoard());
+  const { encodedBoard, curTurn } = location.state || {};
+  let boardString = encodedBoard
+    ? encodedBoard
+    : functionality.getCapturesBoardString();
+  const [board, setBoard] = useState(functionality.decodeBoard(boardString));
   // const [board, setBoard] = useState(functionality.getDoubleCapturesBoard());
   const [possibleMoves, setPossibleMoves] = useState([]);
-  const [turn, setTurn] = useState("w");
+  const [turn, setTurn] = useState(curTurn ? curTurn : "w");
   const [lastClickedSquare, setLastClickedSquare] = useState([]);
   const [checkerLastCaptured, setCheckerLastCaptured] = useState(null);
   const [maxCaptureCountForTurn, setMaxCaptureCountForTurn] = useState();
@@ -207,6 +215,13 @@ function Game() {
               })}
             </React.Fragment>
           ))}
+        </div>
+        <div className="game-config">
+          <div className="board-editor">
+            <button onClick={() => navigate("/boardEditor")}>
+              Board editor
+            </button>
+          </div>
         </div>
       </div>
     </div>

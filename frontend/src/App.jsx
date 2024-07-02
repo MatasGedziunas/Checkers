@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import "./App.css";
 import Home from "./Home/Home";
 import Game from "./Game/Game";
+import BoardEditor from "./BoardEditor/BoardEditor";
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
       <Routes>
         <Route exact path="/" Component={Home}></Route>
         <Route path="/game" Component={Game}></Route>
+        <Route path="/boardEditor" Component={BoardEditor}></Route>
       </Routes>
     </div>
   );

@@ -1,0 +1,79 @@
+.pieces-container {
+    display: grid;
+    width: 80%;
+    height: 50%;
+    background-color: rgb(161, 247, 194);
+    align-self: center;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+
+.pieces-container div{
+    border: 2px solid black;
+}
+
+.pieces-container img {
+    align-self: center;
+    justify-self: center;
+    width: 80%;
+    height: 80%;
+}
+
+.focus {
+    background-color: rgb(229, 77, 77);
+}
+
+.game-config {
+    align-items: center;
+}
+
+.game-config input {
+    align-self: center;
+    margin-bottom: 5rem;
+    width: 90%;
+    height: fit-content;
+    font-size: var(--medium-font-size);
+}
+
+.game-config .play{
+    align-self: center;
+    margin-top: 5rem;
+}
+
+.game-config button{
+    font-size: var(--big-font-size);
+    background-color: rgb(69, 66, 66);
+}
+
+.game-config .board-string{
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.game-config .select-turn{
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: row;
+    align-self: center;
+    width: 60%;
+}
+.game-config .select-turn button{
+    flex: 1;
+}
+
+.game-config .select-turn button.white{
+    background-color: white;
+    color: black;
+}
+
+.game-config .select-turn button.black{
+    background-color: black;
+    color: white;
+}
+
+.game-config .select-turn-container{
+    margin-top: 2rem;
+}

@@ -56,3 +56,19 @@
 img.possible-move{
     filter:opacity(50%);
 }
+
+.game-config {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; 
+    align-items: flex-start;
+    width: 30%;
+}
+
+.game-config .board-editor button {
+    font-size: var(--big-font-size);
+    background-color: rgb(51, 79, 48);
+    border-radius: 5px;
+    border: 0;
+    margin-top: 10rem;
+}

@@ -7,6 +7,13 @@ type Coordinates struct {
 	Col int
 }
 
+func NewCoordinates(row, col int) Coordinates {
+	return Coordinates{
+		Row: row,
+		Col: col,
+	}
+}
+
 type Piece interface {
 	GetCoordinates() Coordinates
 	GetPossibleMoves() []Coordinates
