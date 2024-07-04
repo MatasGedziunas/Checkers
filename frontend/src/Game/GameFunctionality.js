@@ -40,7 +40,9 @@ class GameFunctionality {
       for (let j = 0; j < board[i].length; j++) {
         encoded += board[i][j];
       }
-      encoded += " ";
+      if (i != board.length - 1) {
+        encoded += " ";
+      }
     }
     return encoded;
   }

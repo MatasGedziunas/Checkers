@@ -61,6 +61,11 @@ function BoardEditor() {
     }
   }
 
+  const handleInputChange = (e) => {
+    const text = e.target.value;
+    setBoard(functionality.decodeBoard(text));
+  };
+
   return (
     <div className="game-container">
       <div className="game-screen">
@@ -103,8 +108,8 @@ function BoardEditor() {
             <label>Board string representation:</label>
             <input
               type="text"
-              disabled
               value={functionality.encodeBoard(board)}
+              onChange={handleInputChange}
             />
           </div>
           <div className="pieces-container">

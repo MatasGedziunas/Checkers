@@ -21,13 +21,15 @@ func NewBoard(boardString string) Board {
 		curStr := 0
 		for curStr < len(board[curRow]) {
 			var piece Tile
+			curCol := len(row)
+			curColor := string(board[curRow][curStr])
 			if board[curRow][curStr] == '.' {
-				piece = NewEmptyTile(curRow, len(row))
-			} else if len(board[curRow]) < curStr+1 && board[curRow][curStr+1] == 'q' {
-				piece = NewQueen(curRow, len(row), string(board[curRow][curStr]))
+				piece = NewEmptyTile(curRow, curCol)
+			} else if len(board[curRow]) > curStr+1 && board[curRow][curStr+1] == 'q' {
+				piece = NewQueen(curRow, curCol, curColor)
 				curStr += 1
 			} else {
-				piece = NewChecker(curRow, len(row), string(board[curRow][curStr]))
+				piece = NewChecker(curRow, curCol, curColor)
 			}
 			row = append(row, piece)
 			curStr += 1

@@ -2,9 +2,26 @@ package models
 
 import (
 	"log"
+	"math"
+	"os"
 
 	"github.com/MatasGedziunas/Checkers.git/utils"
 )
+
+var logger *log.Logger
+
+func init() {
+	logger = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	disableLogging()
+}
+
+func enableLogging() {
+	logger.SetOutput(os.Stdout)
+}
+
+func disableLogging() {
+	logger.SetOutput(os.Stderr)
+}
 
 type Tile struct {
 	cords   Coordinates
@@ -51,7 +68,7 @@ func getColorFromString(color string) Color {
 	} else if color == "b" {
 		return Black
 	} else {
-		log.Fatalf("Invalid color given: %v ; expected w or b", color)
+		logger.Fatalf("Invalid color given: %v ; expected w or b", color)
 		return ""
 	}
 }
@@ -74,6 +91,7 @@ func (checker *Tile) SetQueen() {
 }
 
 func (checker *Tile) GetPossibleMoves(board Board) []PossibleMove {
+	// disableLogging()
 	coppiedBoard := NewBoard(board.EncodeBoard())
 	return checker.getCheckerPossibleMoves(coppiedBoard)
 }
@@ -82,12 +100,12 @@ func (checker Tile) getCheckerPossibleMoves(board Board) []PossibleMove {
 	if checker.isEmpty {
 		return []PossibleMove{}
 	}
-	// var directionToMove int
-	// if checker.color == White {
-	// 	directionToMove = -1
-	// } else {
-	// 	directionToMove = 1
-	// }
+	var directionToMoveRow int
+	if checker.color == White {
+		directionToMoveRow = -1
+	} else {
+		directionToMoveRow = 1
+	}
 	captures := []PossibleMove{}
 	directions := [2]int{-1, 1}
 	for _, rowDirection := range directions {
@@ -96,16 +114,14 @@ func (checker Tile) getCheckerPossibleMoves(board Board) []PossibleMove {
 			if checker.isQueen {
 				checkerToCapture = *checker.getFirstCheckerInDirectionForQueen(&board, rowDirection, colDirection)
 			}
-			capturesCount := checker.getCheckerCaptures(board, checkerToCapture, 0)
-			if capturesCount > 0 {
-				log.Printf("Found captures in checker: %v ; possible capture: %v", checker, checkerToCapture)
-				// if queen need to check for all places where it can move
-				// etc. getPossibleTilesAfterCapture
-				captures = append(captures, NewPossibleMove(checkerToCapture.cords.Row, checkerToCapture.cords.Col, capturesCount))
+			possibleCaptures := checker.getCheckerCaptures(board, checkerToCapture, NewEmptyTile(0, 0), []PossibleMove{}, 0)
+			if len(possibleCaptures) > 0 {
+				// logger.Printf("Found captures in checker: %v ; possible capture: %v ; length of possibleCaptures: %v", checker, checkerToCapture, len(possibleCaptures))
+				captures = append(captures, possibleCaptures...)
 			}
 		}
 	}
-
+	logger.Printf("Captures for checker %v : %v", checker, captures)
 	if len(captures) > 0 {
 		// get max capture count moves
 		var maxCapturesCount int
@@ -120,38 +136,66 @@ func (checker Tile) getCheckerPossibleMoves(board Board) []PossibleMove {
 		}
 		return filteredMoves
 	} else {
-
+		return checker.getNonCaptureMoves(board, directionToMoveRow)
 	}
-	return []PossibleMove{}
 }
 
-func (checker *Tile) getCheckerCaptures(board Board, checkerToCapture Tile, capturesCount int) int {
-	var maxCapturesCount int = capturesCount
-	if checker.CanCapture(board, checkerToCapture) {
-		capturesCount += 1
-		maxCapturesCount = capturesCount
+func (checker *Tile) getCheckerCaptures(board Board, checkerToCapture Tile, prevCapture Tile, possibleMoves []PossibleMove, captureCount int) []PossibleMove {
+	logger.Printf("Checker: %v ; Checking if can capture: %v", checker, checkerToCapture)
+	if checker.CanCapture(board, checkerToCapture, prevCapture) {
+		captureCount += 1
 		board.GetChecker(checkerToCapture.cords.Row, checkerToCapture.cords.Col).SetEmpty()
 		board.GetChecker(checker.cords.Row, checker.cords.Col).SetEmpty()
 		movesAfterCapture := checker.getMovesAfterCapture(&board, &checkerToCapture)
+		logger.Printf("Can capture, moves after Capture: %v \n", movesAfterCapture)
+		logger.Printf("Possible moves: %v \n ", possibleMoves)
+		addPossibleMoves(&possibleMoves, movesAfterCapture, captureCount)
 		directions := []int{-1, 1}
 		for _, move := range movesAfterCapture {
 			for _, rowDirection := range directions {
 				for _, colDirection := range directions {
-					board.GetChecker(move.Row, move.Col).SetChecker()
 					tileAfterCapture := board.GetChecker(move.Row, move.Col)
-					tempCapturesCount :=
+					var nextCapture *Tile
+					if checker.isQueen {
+						tileAfterCapture.SetQueen()
+						nextCapture = tileAfterCapture.getFirstCheckerInDirectionForQueen(&board, rowDirection, colDirection)
+					} else {
+						board.GetChecker(move.Row, move.Col).SetChecker()
+						nextCapture = board.GetChecker(
+							tileAfterCapture.cords.Row+rowDirection,
+							tileAfterCapture.cords.Col+colDirection,
+						)
+					}
+					possibleMoves =
 						tileAfterCapture.
-							getCheckerCaptures(board, *board.GetChecker(
-								tileAfterCapture.cords.Row+rowDirection,
-								tileAfterCapture.cords.Col+colDirection,
-							), capturesCount)
-					maxCapturesCount = max(maxCapturesCount, tempCapturesCount)
+							getCheckerCaptures(board, *nextCapture, checkerToCapture, possibleMoves, captureCount)
 					board.GetChecker(move.Row, move.Col).SetEmpty()
+					possibleMoves = removeNotMaxCaptureCountPossibleMoves(possibleMoves)
 				}
 			}
 		}
 	}
-	return maxCapturesCount
+	return possibleMoves
+}
+
+func addPossibleMoves(possibleMoves *[]PossibleMove, movesAfterCapture []Coordinates, capturesCount int) {
+	for _, cords := range movesAfterCapture {
+		*possibleMoves = append(*possibleMoves, NewPossibleMove(cords.Row, cords.Col, capturesCount))
+	}
+}
+
+func removeNotMaxCaptureCountPossibleMoves(possibleMoves []PossibleMove) []PossibleMove {
+	capturesCount := 0
+	for _, move := range possibleMoves {
+		capturesCount = max(move.CapturesCount, capturesCount)
+	}
+	newPossibleMoves := []PossibleMove{}
+	for _, move := range possibleMoves {
+		if move.CapturesCount == capturesCount {
+			newPossibleMoves = append(newPossibleMoves, move)
+		}
+	}
+	return newPossibleMoves
 }
 
 func (queen *Tile) getQueenPossibleMoves(board Board) []PossibleMove {
@@ -160,8 +204,8 @@ func (queen *Tile) getQueenPossibleMoves(board Board) []PossibleMove {
 }
 
 func (checker *Tile) getMovesAfterCapture(board *Board, capturedChecker *Tile) []Coordinates {
-	directionRow := capturedChecker.cords.Row - checker.cords.Row
-	directionCol := capturedChecker.cords.Col - checker.cords.Col
+	directionRow := utils.GetDirection(checker.cords.Row, capturedChecker.cords.Row)
+	directionCol := utils.GetDirection(checker.cords.Col, capturedChecker.cords.Col)
 	moves := []Coordinates{}
 	if !checker.isQueen { // Simple checker
 		moves = append(moves, NewCoordinates(capturedChecker.cords.Row+directionRow, capturedChecker.cords.Col+directionCol))
@@ -174,18 +218,27 @@ func (checker *Tile) getMovesAfterCapture(board *Board, capturedChecker *Tile) [
 			} else {
 				break
 			}
+			curRow += directionRow
+			curCol += directionCol
 		}
 	}
 	return moves
 }
 
-func (checkerFrom *Tile) CanCapture(board Board, checkerTo Tile) bool {
-	directionRow := checkerTo.cords.Row - checkerFrom.cords.Row
-	directionCol := checkerTo.cords.Col - checkerFrom.cords.Col
+func (checkerFrom *Tile) CanCapture(board Board, checkerTo Tile, prevChecker Tile) bool {
+	directionRow := utils.GetDirection(checkerFrom.cords.Row, checkerTo.cords.Row)
+	directionCol := utils.GetDirection(checkerFrom.cords.Col, checkerTo.cords.Col)
+	prevDirectionRow := utils.GetDirection(prevChecker.cords.Row, checkerFrom.cords.Row)
+	prevDirectionCol := utils.GetDirection(prevChecker.cords.Col, checkerFrom.cords.Col)
+	logger.Printf("CanCapture: directionRow: %v, directionCol %v, prevDirectionRow %v, prevDirectionCol %v", directionRow, directionCol, prevDirectionRow, prevDirectionCol)
 	if !checkerFrom.isQueen {
 		return checkCaptureConditions(board, *checkerFrom, checkerTo, directionRow, directionCol)
 	}
+	if !checkerFrom.isSameDiagonal(&checkerTo) || ((prevDirectionRow*-1) == directionRow && (prevDirectionCol*-1) == directionCol) { // different row direction and col direction {
+		return false
+	}
 	checkerToCheck := checkerFrom.getFirstCheckerInDirectionForQueen(&board, directionRow, directionCol)
+	logger.Printf("CheckerToCheck: %v", checkerToCheck)
 	return checkCaptureConditions(board, *checkerFrom, *checkerToCheck, directionRow, directionCol)
 }
 
@@ -193,12 +246,13 @@ func checkCaptureConditions(board Board, checkerFrom, checkerTo Tile, directionR
 	return (utils.IsInBounds(checkerTo.cords.Row+directionRow, checkerTo.cords.Col+directionCol, len(board.Pieces)) &&
 		!checkerFrom.isEmpty && !checkerTo.isEmpty &&
 		checkerFrom.color != checkerTo.color &&
-		board.GetChecker(checkerTo.cords.Row+directionRow, checkerTo.cords.Col+directionCol).isEmpty)
+		board.GetChecker(checkerTo.cords.Row+directionRow, checkerTo.cords.Col+directionCol).isEmpty &&
+		checkerFrom.isSameDiagonal(&checkerTo))
 }
 
 func (queen *Tile) getFirstCheckerInDirectionForQueen(board *Board, rowDirection, colDirection int) *Tile {
 	if !queen.isQueen {
-		log.Fatal("getFirstCheckerInDirectionForQueen called when tile is not queen")
+		logger.Fatal("getFirstCheckerInDirectionForQueen called when tile is not queen")
 	}
 	curRow := queen.cords.Row + rowDirection
 	curCol := queen.cords.Col + colDirection
@@ -206,6 +260,47 @@ func (queen *Tile) getFirstCheckerInDirectionForQueen(board *Board, rowDirection
 		if !board.GetChecker(curRow, curCol).isEmpty {
 			return board.GetChecker(curRow, curCol)
 		}
+		curRow += rowDirection
+		curCol += colDirection
 	}
 	return &Tile{isEmpty: true}
+}
+
+func (checker *Tile) getNonCaptureMoves(board Board, rowDirection int) []PossibleMove {
+	possibleMoves := []PossibleMove{}
+	if !checker.isQueen {
+		if checker.canMoveToTile(board, checker.cords.Row+rowDirection, checker.cords.Col-1) {
+			possibleMoves = append(possibleMoves, NewPossibleMove(checker.cords.Row+rowDirection, checker.cords.Col-1, 0))
+		}
+		if checker.canMoveToTile(board, checker.cords.Row+rowDirection, checker.cords.Col+1) {
+			possibleMoves = append(possibleMoves, NewPossibleMove(checker.cords.Row+rowDirection, checker.cords.Col+1, 0))
+		}
+
+	} else {
+		directions := []int{-1, 1}
+		for _, rowD := range directions {
+			for _, colD := range directions {
+				curRow := checker.cords.Row + rowD
+				curCol := checker.cords.Col + colD
+				for utils.IsInBounds(curRow, curCol, len(board.Pieces)) {
+					if checker.canMoveToTile(board, curRow, curCol) {
+						possibleMoves = append(possibleMoves, NewPossibleMove(curRow, curCol, 0))
+					} else {
+						break
+					}
+					curRow += rowD
+					curCol += colD
+				}
+			}
+		}
+	}
+	return possibleMoves
+}
+
+func (checker *Tile) canMoveToTile(board Board, row, col int) bool {
+	return utils.IsInBounds(row, col, board.boardSize) && board.GetChecker(row, col).isEmpty
+}
+
+func (checker *Tile) isSameDiagonal(checkerTo *Tile) bool {
+	return math.Abs(float64(checker.cords.Row-checkerTo.cords.Row)) == math.Abs(float64(checker.cords.Col-checkerTo.cords.Col))
 }
