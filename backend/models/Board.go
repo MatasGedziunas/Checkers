@@ -1,22 +1,29 @@
 package models
 
 import (
+	"fmt"
+	"log"
 	"strings"
 
 	"github.com/MatasGedziunas/Checkers.git/utils"
 )
+
+const defaultBoardSize = 10
 
 type Board struct {
 	Pieces    [][]Tile
 	boardSize int
 }
 
-func NewBoard(boardString string) Board {
+func NewBoard(boardString string) (Board, error) {
 	board := strings.Split(boardString, " ")
+	if len(board) != defaultBoardSize {
+		return Board{}, fmt.Errorf("invalid board given, expected size to be %v, but got: %v ; board: %v ; boardString: %v", defaultBoardSize, len(board), board, boardString)
+	}
 	var pieces [][]Tile
 	var row []Tile
 	curRow := 0
-	for curRow < len(board)-1 {
+	for curRow < len(board) {
 		row = []Tile{}
 		curStr := 0
 		for curStr < len(board[curRow]) {
@@ -34,16 +41,22 @@ func NewBoard(boardString string) Board {
 			row = append(row, piece)
 			curStr += 1
 		}
+		if len(row) != defaultBoardSize {
+			return Board{}, fmt.Errorf("invalid board given, expected row size to be %v, but got: %v ; row: %v ; board: %v", defaultBoardSize, curStr, board[curRow], board)
+		}
 		pieces = append(pieces, row)
 		curRow += 1
 	}
 	return Board{Pieces: pieces,
-		boardSize: len(row)}
+		boardSize: len(row)}, nil
 }
 
-func (board *Board) EncodeBoard() string {
+func (board *Board) EncodeBoard() (string, error) {
 	var sb strings.Builder
-	for _, row := range board.Pieces {
+	if len(board.Pieces) != defaultBoardSize {
+		return "", fmt.Errorf("Encode board, Invalid row size: %v ; expected %v", len(board.Pieces), defaultBoardSize)
+	}
+	for rowIndex, row := range board.Pieces {
 		for _, piece := range row {
 			if piece.isEmpty {
 				sb.WriteByte('.')
@@ -54,9 +67,22 @@ func (board *Board) EncodeBoard() string {
 				sb.WriteByte('q')
 			}
 		}
-		sb.WriteByte(' ')
+		if rowIndex != defaultBoardSize-1 {
+			sb.WriteByte(' ')
+		}
+
 	}
-	return sb.String()
+	return sb.String(), nil
+}
+
+func (board *Board) PrintBoard() {
+	for _, row := range board.Pieces {
+		rowToPrint := ""
+		for _, piece := range row {
+			rowToPrint += piece.ToStr()
+		}
+		log.Print(rowToPrint)
+	}
 }
 
 func (board *Board) GetChecker(row int, col int) *Tile {

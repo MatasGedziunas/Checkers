@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"log"
 	"math"
 	"os"
@@ -73,6 +74,19 @@ func getColorFromString(color string) Color {
 	}
 }
 
+func (checker *Tile) ToStr() string {
+	str := ""
+	if checker.isEmpty {
+		str = "."
+	} else {
+		str = string(checker.color)
+	}
+	if checker.isQueen {
+		str += "q"
+	}
+	return str
+}
+
 func (checker *Tile) GetCoordinates() Coordinates {
 	return checker.cords
 }
@@ -90,10 +104,16 @@ func (checker *Tile) SetQueen() {
 	checker.isQueen = true
 }
 
-func (checker *Tile) GetPossibleMoves(board Board) []PossibleMove {
-	// disableLogging()
-	coppiedBoard := NewBoard(board.EncodeBoard())
-	return checker.getCheckerPossibleMoves(coppiedBoard)
+func (checker *Tile) GetPossibleMoves(board Board) ([]PossibleMove, error) {
+	encodedBoard, err := board.EncodeBoard()
+	if err != nil {
+		return []PossibleMove{}, errors.New(err.Error())
+	}
+	coppiedBoard, err := NewBoard(encodedBoard)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return checker.getCheckerPossibleMoves(coppiedBoard), nil
 }
 
 func (checker Tile) getCheckerPossibleMoves(board Board) []PossibleMove {

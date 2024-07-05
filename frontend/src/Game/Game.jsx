@@ -28,6 +28,22 @@ function Game() {
   const refs = useRef({});
 
   function updatePossibleMoves() {
+    const encodedBoard = functionality.encodeBoard(board);
+    const url =
+      "http://localhost:3000/possibleMoves?boardString=" + encodedBoard;
+    let possibleMoves = fetch(url, { method: "GET" })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok " + response.statusText);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        return data;
+      })
+      .catch((error) => console.log("Failed fetching possible moves: ", error));
+
     if (checkerLastCaptured != null) {
       const row = checkerLastCaptured[0];
       const col = checkerLastCaptured[1];
