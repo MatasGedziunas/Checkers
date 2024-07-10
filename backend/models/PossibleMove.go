@@ -2,15 +2,12 @@ package models
 
 type PossibleMove struct {
 	CapturesCount int
-	Move          Coordinates
+	Moves         []Coordinates
 }
 
-func NewPossibleMove(row int, col int, capturesCount int) PossibleMove {
+func NewPossibleMove(capturesCount int, moves []Coordinates) PossibleMove {
 	return PossibleMove{
 		CapturesCount: capturesCount,
-		Move: Coordinates{
-			Row: row,
-			Col: col,
-		},
+		Moves:         moves,
 	}
 }

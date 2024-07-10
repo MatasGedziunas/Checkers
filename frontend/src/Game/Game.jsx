@@ -27,67 +27,63 @@ function Game() {
 
   const refs = useRef({});
 
-  function updatePossibleMoves() {
-    const encodedBoard = functionality.encodeBoard(board);
-    const url =
-      "http://localhost:3000/possibleMoves?boardString=" + encodedBoard;
-    let possibleMoves = fetch(url, { method: "GET" })
-      .then((response) => {
+  async function updatePossibleMoves() {
+    try {
+      console.log(board);
+      const encodedBoard = functionality.encodeBoard(board);
+      if (checkerLastCaptured != null) {
+        const row = checkerLastCaptured[0];
+        const col = checkerLastCaptured[1];
+        const url = `http://localhost:3000/possibleMoves?boardString=${encodedBoard}&row=${row}&col=${col}&turn=${turn}`;
+        const response = await fetch(url, { method: "GET" });
+
         if (!response.ok) {
-          throw new Error("Network response was not ok " + response.statusText);
+          const msg = await response.text();
+          throw new Error("Network response was not ok: " + msg);
         }
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data);
-        return data;
-      })
-      .catch((error) => console.log("Failed fetching possible moves: ", error));
 
-    if (checkerLastCaptured != null) {
-      const row = checkerLastCaptured[0];
-      const col = checkerLastCaptured[1];
-      const newPossibleMoves = possibleMoves.map((row) =>
-        new Array(row.length).fill([])
-      );
-      newPossibleMoves[row][col] = functionality.getPossibleMoves(
-        board,
-        row,
-        col
-      );
-      setPossibleMoves(newPossibleMoves);
-    } else {
-      let newPossibleMoves = [];
-      let maxCaptureCount = 0;
+        const moves = await response.json();
 
-      for (let i = 0; i < board.length; i++) {
-        newPossibleMoves.push([]);
-        for (let j = 0; j < board[i].length; j++) {
-          if (board[i][j] == "." || board[i][j][0] != turn) {
-            newPossibleMoves[i].push([]);
-          } else {
-            const temp = functionality.getPossibleMoves(board, i, j);
-            maxCaptureCount = Math.max(maxCaptureCount, temp.captureCount);
+        const newPossibleMoves = possibleMoves.map((row) =>
+          new Array(row.length).fill([])
+        );
+        newPossibleMoves[row][col] = {
+          cords: moves.Moves,
+          captureCount: moves.CapturesCount,
+        };
+        setMaxCaptureCountForTurn(moves.CapturesCount);
+        setPossibleMoves(newPossibleMoves);
+      } else {
+        const url = `http://localhost:3000/possibleMoves?boardString=${encodedBoard}&turn=${turn}`;
+        let newPossibleMoves = [];
+        let maxCaptureCount = 0;
+        const response = await fetch(url, { method: "GET" });
+
+        if (!response.ok) {
+          const msg = await response.text();
+          throw new Error("Network response was not ok: " + msg);
+        }
+        const moves = await response.json();
+        for (let i = 0; i < board.length; i++) {
+          newPossibleMoves.push([]);
+          for (let j = 0; j < board[i].length; j++) {
             newPossibleMoves[i].push({
-              cords: temp.cords,
-              captureCount: temp.captureCount,
+              cords: moves[i][j].Moves,
+              captureCount: moves[i][j].CapturesCount,
             });
+            maxCaptureCount = Math.max(
+              maxCaptureCount,
+              moves[i][j].CapturesCount
+            );
           }
         }
+
+        console.log(`Max capture count: ${maxCaptureCount}`);
+        setMaxCaptureCountForTurn(maxCaptureCount);
+        setPossibleMoves(newPossibleMoves);
       }
-      if (maxCaptureCount > 0) {
-        for (let i = 0; i < newPossibleMoves.length; i++) {
-          let row = newPossibleMoves[i];
-          row.forEach((possibleMove) => {
-            if (possibleMove.captureCount != maxCaptureCount) {
-              possibleMove.cords = [];
-            }
-          });
-        }
-      }
-      console.log(`Max capture count: ${maxCaptureCount}`);
-      setMaxCaptureCountForTurn(maxCaptureCount);
-      setPossibleMoves(newPossibleMoves);
+    } catch (error) {
+      console.log("Failed fetching possible moves: ", error);
     }
   }
 
@@ -130,14 +126,15 @@ function Game() {
 
     const directionRow = Math.sign(rowTo - rowFrom);
     const directionCol = Math.sign(colTo - colFrom);
-    const checkerColorToRemove = newBoard[rowFrom][colFrom] === "w" ? "b" : "w";
+    const checkerColorToRemove =
+      newBoard[rowFrom][colFrom][0] === "w" ? "b" : "w";
 
     newBoard[rowTo][colTo] = newBoard[rowFrom][colFrom];
     newBoard[rowFrom][colFrom] = ".";
 
     let curRow = rowFrom + directionRow;
     let curCol = colFrom + directionCol;
-
+    console.log(checkerColorToRemove);
     while (
       functionality.isInBounds(newBoard, curRow, curCol) &&
       curRow !== rowTo &&
@@ -170,7 +167,7 @@ function Game() {
       return;
     }
     for (let move of checkerPossibleMoves.cords) {
-      const key = `${move[0]}-${move[1]}`;
+      const key = `${move.Row}-${move.Col}`;
       const img = document.createElement("img");
       img.src = getCheckerImage(checker);
       img.alt = "Possible move";
@@ -234,7 +231,13 @@ function Game() {
         </div>
         <div className="game-config">
           <div className="board-editor">
-            <button onClick={() => navigate("/boardEditor")}>
+            <button
+              onClick={() =>
+                navigate("/boardEditor", {
+                  state: { encodedBoard: functionality.encodeBoard(board) },
+                })
+              }
+            >
               Board editor
             </button>
           </div>

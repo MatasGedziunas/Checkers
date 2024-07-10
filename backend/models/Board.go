@@ -61,7 +61,7 @@ func (board *Board) EncodeBoard() (string, error) {
 			if piece.isEmpty {
 				sb.WriteByte('.')
 			} else {
-				sb.WriteString(piece.color.GetColorString())
+				sb.WriteString(piece.Color.GetColorString())
 			}
 			if piece.isQueen {
 				sb.WriteByte('q')

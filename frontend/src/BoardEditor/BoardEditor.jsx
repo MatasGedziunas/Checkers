@@ -7,13 +7,17 @@ import wKSvg from "../assets/wK.svg";
 import "../Game/Game.css";
 import "./BoardEditor.css";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 function BoardEditor() {
   const navigate = useNavigate();
+  const location = useLocation();
   const functionality = new GameFunctionality();
-  const [board, setBoard] = useState(
-    functionality.decodeBoard(functionality.getEmptyBoardString())
-  );
+  const { encodedBoard } = location.state || {};
+  let boardString = encodedBoard
+    ? encodedBoard
+    : functionality.getEmptyBoardString();
+  const [board, setBoard] = useState(functionality.decodeBoard(boardString));
   const [turn, setTurn] = useState("w");
   const [lastClicked, setLastClicked] = useState(null);
 
