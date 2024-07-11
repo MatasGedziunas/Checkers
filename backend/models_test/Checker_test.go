@@ -16,6 +16,7 @@ func TestChecker_GetPossibleMoves(t *testing.T) {
 	queenDifficultCapture, _ := gameFunctionality.DecodeBoard(gameFunctionality.QueenDifficultCapture)
 	queenStopWithSameColorChecker, _ := gameFunctionality.DecodeBoard(gameFunctionality.QueenStopCaptureWithSameColorChecker)
 	queenWeirdStuff, _ := gameFunctionality.DecodeBoard(gameFunctionality.QueenWeirdStuff)
+	queenDoubleCaptureLastRow, _ := gameFunctionality.DecodeBoard(gameFunctionality.QueenDoubleCaptureLastRow)
 	t.Run("OneCapture", func(t *testing.T) {
 		checkerToTest := capturesBoard.GetChecker(6, 3)
 		possibleMoves, _ := checkerToTest.GetPossibleMoves(capturesBoard)
@@ -86,6 +87,18 @@ func TestChecker_GetPossibleMoves(t *testing.T) {
 		checkerToTest := queenWeirdStuff.GetChecker(8, 7)
 		possibleMoves, _ := checkerToTest.GetPossibleMoves(queenWeirdStuff)
 		wantCoordinates := []models.Coordinates{models.NewCoordinates(5, 4)}
+		want := models.NewPossibleMove(2, wantCoordinates)
+		sortPossibleMoves(&possibleMoves)
+		sortPossibleMoves(&want)
+		if !reflect.DeepEqual(possibleMoves, want) {
+			t.Errorf("%v checker tested ; got possibleMoves: %v ; expected: %v", checkerToTest, possibleMoves, want)
+		}
+	})
+
+	t.Run("QueenBackrankNotCapturing", func(t *testing.T) {
+		checkerToTest := queenDoubleCaptureLastRow.GetChecker(7, 2)
+		possibleMoves, _ := checkerToTest.GetPossibleMoves(queenDoubleCaptureLastRow)
+		wantCoordinates := []models.Coordinates{models.NewCoordinates(9, 4)}
 		want := models.NewPossibleMove(2, wantCoordinates)
 		sortPossibleMoves(&possibleMoves)
 		sortPossibleMoves(&want)

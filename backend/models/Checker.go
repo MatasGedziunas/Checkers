@@ -93,7 +93,6 @@ func (checker *Tile) GetCoordinates() Coordinates {
 
 func (checker *Tile) SetEmpty() {
 	checker.isEmpty = true
-	checker.cords = Coordinates{}
 	checker.isQueen = false
 	checker.Color = ""
 }
@@ -176,11 +175,11 @@ func (checker *Tile) getCheckerCaptures(board Board, checkerToCapture Tile, prev
 	logger.Printf("Checker: %v ; Checking if can capture: %v", checker, checkerToCapture)
 	if checker.CanCapture(board, checkerToCapture, prevCapture) {
 		captureCount += 1
-		logger.Printf("Checker: %v ; can capture: %v ; capturesCount: %v", checker, checkerToCapture, captureCount)
+		// logger.Printf("Checker: %v ; can capture: %v ; capturesCount: %v", checker, checkerToCapture, captureCount)
 		board.GetChecker(checkerToCapture.cords.Row, checkerToCapture.cords.Col).SetEmpty()
 		board.GetChecker(checker.cords.Row, checker.cords.Col).SetEmpty()
 		var movesAfterCapture []Coordinates = checker.getMovesAfterCapture(&board, &checkerToCapture)
-		logger.Printf("Can capture, moves after Capture: %v \n", movesAfterCapture)
+		// logger.Printf("Can capture, moves after Capture: %v \n", movesAfterCapture)
 		directions := []int{-1, 1}
 		startingCaptureCount := captureCount
 		for _, move := range movesAfterCapture {
@@ -199,6 +198,7 @@ func (checker *Tile) getCheckerCaptures(board Board, checkerToCapture Tile, prev
 							tileAfterCapture.cords.Col+colDirection,
 						)
 					}
+					// logger.Printf("RowDirection: %v, colDirection: %v ; nextCapture: %v, tileAfterCapture: %v, checker: %v", rowDirection, colDirection, nextCapture, tileAfterCapture, checker)
 					var temp int
 					temp, possibleMoves =
 						tileAfterCapture.
@@ -287,6 +287,7 @@ func (queen *Tile) getFirstCheckerInDirectionForQueen(board *Board, rowDirection
 	curRow := queen.cords.Row + rowDirection
 	curCol := queen.cords.Col + colDirection
 	for utils.IsInBounds(curRow, curCol, board.boardSize) {
+
 		if !board.GetChecker(curRow, curCol).isEmpty {
 			return board.GetChecker(curRow, curCol)
 		}
