@@ -24,6 +24,7 @@ function Game() {
   const [lastClickedSquare, setLastClickedSquare] = useState([]);
   const [checkerLastCaptured, setCheckerLastCaptured] = useState(null);
   const [maxCaptureCountForTurn, setMaxCaptureCountForTurn] = useState();
+  const [winner, setWinner] = useState("");
 
   const refs = useRef({});
 
@@ -31,6 +32,15 @@ function Game() {
     try {
       console.log(board);
       const encodedBoard = functionality.encodeBoard(board);
+      if (functionality.countCheckers(encodedBoard, "w") == 0) {
+        setWinner("Black");
+        return;
+      }
+      if (functionality.countCheckers(encodedBoard, "b") == 0) {
+        setWinner("White");
+        return;
+      }
+      console.log("game is not over");
       if (checkerLastCaptured != null) {
         const row = checkerLastCaptured[0];
         const col = checkerLastCaptured[1];
@@ -191,10 +201,25 @@ function Game() {
     }
   }
 
+  function gameOverButtonHandler() {
+    setPossibleMoves([]);
+    setLastClickedSquare([]);
+    setCheckerLastCaptured(null);
+    setTurn("w");
+    setWinner("");
+    setBoard(functionality.getStartingBoard());
+  }
+
   return (
     <div className="game-container">
       <div className="game-screen">
         <div className="board">
+          {winner !== "" && (
+            <dialog open>
+              <p>Game over {winner} won</p>
+              <button onClick={() => gameOverButtonHandler()}>Ok</button>
+            </dialog>
+          )}
           {board.map((row, rowIndex) => (
             <React.Fragment key={rowIndex}>
               {row.map((cell, cellIndex) => {

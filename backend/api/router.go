@@ -17,6 +17,7 @@ func main() {
 	}
 	r.Use(cors.Handler(corsOptions))
 	r.Get("/possibleMoves", gameFunctionality.GetPossibleMoves)
+
 	log.Println("Server running")
 	err := http.ListenAndServe(":3000", r)
 	if err != nil {

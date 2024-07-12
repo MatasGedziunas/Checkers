@@ -26,6 +26,15 @@
     height: 100%;
 }
 
+.board dialog{
+    align-self: center;
+    justify-self: center;
+}
+
+.board dialog p{
+    color: white;
+}
+
 .board p {
     color: black;
     font-weight: 500;

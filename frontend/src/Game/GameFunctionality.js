@@ -258,6 +258,16 @@ class GameFunctionality {
   cloneBoard(arr) {
     return arr.map((innerArr) => innerArr.slice());
   }
+
+  countCheckers(board, checkerColor) {
+    let count = 0;
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] === checkerColor) {
+        count++;
+      }
+    }
+    return count;
+  }
 }
 
 export default GameFunctionality;
