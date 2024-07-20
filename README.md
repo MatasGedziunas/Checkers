@@ -4,23 +4,6 @@
 
 This is a project with which I am trying out Golang. Currently, it is possible to launch and play checkers (draughts).
 
-## Running the game
-
-- Clone this repository
-- ...
-- cd frontend
-- npm run dev
-- Open another terminal
-- cd backend/api
-- go run .
-- Go to the port on which you opened to web server (usually [http://localhost:5173/](http://localhost:5173/))
-
-# Currently Building
-
-# Checkers
-
-This is a project with which I am trying out Golang. Currently, it is possible to launch and play checkers (draughts).
-
 ## Running the Game
 
 1. **Clone this repository:**
