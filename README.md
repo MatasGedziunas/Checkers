@@ -8,7 +8,7 @@ This is a project with which I am trying out Golang. Currently, it is possible t
 
 1. **Clone this repository:**
    ```sh
-   git clone <repository-url>
+   git clone https://github.com/MatasGedziunas/Checkers.git
    ```
 2. **Navigate to the frontend directory and start the development server**
    ```sh
