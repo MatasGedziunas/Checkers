@@ -1,0 +1,48 @@
+
+.lobby-container{
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 100px;
+    width: 80%;
+}
+
+.game-lobby{
+    align-self: flex-start;
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    padding: 10px;
+    gap: 10px;
+}
+
+.game-lobby > div{
+    text-align: center;
+    background-color: rgb(211, 180, 180);
+    border: 5px white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.game-lobby .header{
+    /* grid-area: header; */
+    grid-column: 1 / span 4;
+}
+
+.game-lobby .white-player{
+    /* grid-area: white-player; */
+}
+
+.game-lobby .black-player{
+    /* grid-area: black-player; */
+}
+
+.game-lobby .board-string{
+    /* grid-area: board-string; */
+}
+
+.game-lobby .join-game button{
+    /* grid-area: board-string; */
+    height: fit-content;
+    font-size: var(--medium-font-size);
+}

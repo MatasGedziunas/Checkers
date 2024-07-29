@@ -18,6 +18,10 @@ class GameFunctionality {
     return Boards.startingBoard;
   }
 
+  getStartingBoardString() {
+    return Boards.startingBoardString;
+  }
+
   getCapturesBoard() {
     return Boards.capturesBoard;
   }
@@ -70,6 +74,25 @@ class GameFunctionality {
       }
     }
     return board;
+  }
+
+  isValidBoard(board) {
+    if (board.length != 10) {
+      return false;
+    }
+    for (let i = 0; i < board.length; i++) {
+      let row = board[i];
+      if (row.length != 10) {
+        console.log(board, row);
+        return false;
+      }
+      for (let j = 0; j < row.length; j++) {
+        if ((i + j) % 2 == 0 && row[j] != ".") {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   updateQueens(board) {
@@ -259,10 +282,10 @@ class GameFunctionality {
     return arr.map((innerArr) => innerArr.slice());
   }
 
-  countCheckers(board, checkerColor) {
+  countCheckers(encodedBoard, checkerColor) {
     let count = 0;
-    for (let i = 0; i < board.length; i++) {
-      if (board[i] === checkerColor) {
+    for (let i = 0; i < encodedBoard.length; i++) {
+      if (encodedBoard[i] === checkerColor) {
         count++;
       }
     }

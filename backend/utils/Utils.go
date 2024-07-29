@@ -1,5 +1,7 @@
 package utils
 
+import "reflect"
+
 func GetTileColor(row int, col int) string {
 	if (row+col)%2 == 0 {
 		return "w"
@@ -23,4 +25,15 @@ func GetDirection(fromCell int, toCell int) int {
 	} else {
 		return 1
 	}
+}
+
+func GetColumnsOfStruct(t interface{}) []interface{} {
+	s := reflect.ValueOf(t).Elem()
+	numCols := s.NumField()
+	columns := make([]interface{}, numCols)
+	for i := 0; i < numCols; i++ {
+		field := s.Field(i)
+		columns[i] = field.Addr().Interface()
+	}
+	return columns
 }

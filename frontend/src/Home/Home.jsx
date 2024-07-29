@@ -8,7 +8,7 @@ function Home() {
 
   const handleSubmit = () => {
     console.log(name);
-    navigate("/game");
+    navigate("/waitingRoom");
   };
 
   return (
@@ -19,7 +19,7 @@ function Home() {
         id="playerName"
         onChange={(e) => setName(e.target.value.trim())}
       ></input>
-      <button onClick={handleSubmit}>Submit</button>
+      <button onClick={handleSubmit}>Create game</button>
     </div>
   );
 }

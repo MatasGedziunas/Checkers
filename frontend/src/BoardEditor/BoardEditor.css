@@ -29,7 +29,7 @@
 
 .game-config input {
     align-self: center;
-    margin-bottom: 5rem;
+    margin-bottom: 1rem;
     width: 90%;
     height: fit-content;
     font-size: var(--medium-font-size);
@@ -38,6 +38,7 @@
 .game-config .play{
     align-self: center;
     margin-top: 5rem;
+    margin-bottom: 1rem;
 }
 
 .game-config button{
@@ -60,6 +61,7 @@
     align-self: center;
     width: 60%;
 }
+
 .game-config .select-turn button{
     flex: 1;
 }
@@ -70,7 +72,7 @@
 }
 
 .game-config .select-turn button.black{
-    background-color: black;
+    background-color: rgb(152, 116, 116);
     color: white;
 }
 

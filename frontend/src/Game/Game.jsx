@@ -16,21 +16,31 @@ function Game() {
   const { encodedBoard, curTurn } = location.state || {};
   let boardString = encodedBoard
     ? encodedBoard
-    : functionality.getCapturesBoardString();
+    : functionality.getStartingBoardString();
   const [board, setBoard] = useState(functionality.decodeBoard(boardString));
   // const [board, setBoard] = useState(functionality.getDoubleCapturesBoard());
   const [possibleMoves, setPossibleMoves] = useState([]);
   const [turn, setTurn] = useState(curTurn ? curTurn : "w");
+  const [turnChanged, setTurnChanged] = useState(false);
   const [lastClickedSquare, setLastClickedSquare] = useState([]);
   const [checkerLastCaptured, setCheckerLastCaptured] = useState(null);
   const [maxCaptureCountForTurn, setMaxCaptureCountForTurn] = useState();
   const [winner, setWinner] = useState("");
+  const [errorResponse, setErrorResponse] = useState("");
+  const [whiteCheckerCount, setWhiteCheckerCount] = useState(
+    functionality.countCheckers(board, "w")
+  );
+  const [blackCheckerCount, setBlackCheckerCount] = useState(
+    functionality.countCheckers(board, "b")
+  );
+  const [lastMove, setLastMove] = useState(null);
+  const [prevBoard, setPrevBoard] = useState(null);
 
   const refs = useRef({});
 
   async function updatePossibleMoves() {
+    setErrorResponse("Fetching possible moves...");
     try {
-      console.log(board);
       const encodedBoard = functionality.encodeBoard(board);
       if (functionality.countCheckers(encodedBoard, "w") == 0) {
         setWinner("Black");
@@ -40,7 +50,6 @@ function Game() {
         setWinner("White");
         return;
       }
-      console.log("game is not over");
       if (checkerLastCaptured != null) {
         const row = checkerLastCaptured[0];
         const col = checkerLastCaptured[1];
@@ -49,9 +58,10 @@ function Game() {
 
         if (!response.ok) {
           const msg = await response.text();
-          throw new Error("Network response was not ok: " + msg);
+          // throw new Error("Network response was not ok: " + msg);
+          setErrorResponse(msg);
+          return;
         }
-
         const moves = await response.json();
 
         const newPossibleMoves = possibleMoves.map((row) =>
@@ -68,10 +78,11 @@ function Game() {
         let newPossibleMoves = [];
         let maxCaptureCount = 0;
         const response = await fetch(url, { method: "GET" });
-
         if (!response.ok) {
           const msg = await response.text();
-          throw new Error("Network response was not ok: " + msg);
+          // throw new Error("Network response was not ok: " + msg);
+          setErrorResponse(msg);
+          return;
         }
         const moves = await response.json();
         for (let i = 0; i < board.length; i++) {
@@ -88,18 +99,25 @@ function Game() {
           }
         }
 
-        console.log(`Max capture count: ${maxCaptureCount}`);
+        // console.log(`Max capture count: ${maxCaptureCount}`);
         setMaxCaptureCountForTurn(maxCaptureCount);
         setPossibleMoves(newPossibleMoves);
       }
     } catch (error) {
       console.log("Failed fetching possible moves: ", error);
+      setErrorResponse("Failed fetching possible moves: " + error);
     }
   }
 
   useEffect(() => {
-    console.log("updating posssible moves");
+    // console.log("updating posssible moves");
     updatePossibleMoves();
+    setBlackCheckerCount(
+      functionality.countCheckers(functionality.encodeBoard(board), "b")
+    );
+    setWhiteCheckerCount(
+      functionality.countCheckers(functionality.encodeBoard(board), "w")
+    );
   }, [board]);
 
   useEffect(() => {
@@ -131,6 +149,10 @@ function Game() {
   }
 
   function makeMove(rowFrom, colFrom, rowTo, colTo) {
+    if (turnChanged) {
+      setDefaultColorForAllSquares();
+      setTurnChanged(false);
+    }
     // Create a new copy of the board to ensure state change detection
     let newBoard = board.map((row) => row.slice());
 
@@ -144,7 +166,6 @@ function Game() {
 
     let curRow = rowFrom + directionRow;
     let curCol = colFrom + directionCol;
-    console.log(checkerColorToRemove);
     while (
       functionality.isInBounds(newBoard, curRow, curCol) &&
       curRow !== rowTo &&
@@ -156,23 +177,55 @@ function Game() {
       curRow += directionRow;
       curCol += directionCol;
     }
-
+    highlightSquare(rowFrom, colFrom, "last-move-highlight");
+    highlightSquare(rowTo, colTo, "last-move-highlight");
     if (maxCaptureCountForTurn <= 1) {
       setTurn(turn === "w" ? "b" : "w");
       setCheckerLastCaptured(null);
+      setTurnChanged(true);
       newBoard = functionality.updateQueens(newBoard);
     } else {
       setCheckerLastCaptured([rowTo, colTo]);
       setMaxCaptureCountForTurn(maxCaptureCountForTurn - 1);
     }
     // Update the board state
+    setPrevBoard(board);
     setBoard(newBoard);
+  }
+
+  // useEffect(() => {
+  //   if (turnChanged) {
+  //     setDefaultColorForAllSquares();
+  //     setTurnChanged(false); // Reset the turn change flag
+  //   }
+  // }, [turnChanged]);
+
+  function setDefaultColorForAllSquares() {
+    for (let i = 0; i < board.length; i++) {
+      for (let j = 0; j < board[i].length; j++) {
+        setDefaultColorForSquare(i, j);
+      }
+    }
+  }
+
+  function setDefaultColorForSquare(row, col) {
+    const key = `${row}-${col}`;
+    refs.current[key].className = `cell ${
+      (row + col) % 2 === 0 ? "white" : "black"
+    }`;
+  }
+
+  function highlightSquare(row, col, colorStyle) {
+    const key = `${row}-${col}`;
+    refs.current[key].className = `cell ${colorStyle}`;
   }
 
   function addPossibleMoveCheckers(row, col) {
     const checker = board[row][col];
+    if (!possibleMoves[row] || !possibleMoves[row][col]) {
+      updatePossibleMoves();
+    }
     let checkerPossibleMoves = possibleMoves[row][col];
-    console.log(checkerPossibleMoves);
     if (!checkerPossibleMoves.cords) {
       return;
     }
@@ -184,6 +237,14 @@ function Game() {
       img.className = "possible-move";
       refs.current[key].appendChild(img);
     }
+  }
+
+  function revertPreviousMove() {
+    if (!lastMove) {
+      throw new Error("Trying to revert previous move when it is not set");
+    }
+    let newBoard = board.map((row) => row.slice());
+    newBoard;
   }
 
   function getCheckerImage(cell) {
@@ -208,6 +269,7 @@ function Game() {
     setTurn("w");
     setWinner("");
     setBoard(functionality.getStartingBoard());
+    setDefaultColorForAllSquares();
   }
 
   return (
@@ -222,17 +284,17 @@ function Game() {
           )}
           {board.map((row, rowIndex) => (
             <React.Fragment key={rowIndex}>
-              {row.map((cell, cellIndex) => {
-                const key = `${rowIndex}-${cellIndex}`;
+              {row.map((cell, colIndex) => {
+                const key = `${rowIndex}-${colIndex}`;
                 return (
                   <div
                     key={key}
                     ref={(el) => (refs.current[key] = el)}
                     className={`cell ${
-                      (rowIndex + cellIndex) % 2 === 0 ? "white" : "black"
+                      (rowIndex + colIndex) % 2 === 0 ? "white" : "black"
                     }`}
                     data-key={key}
-                    onClick={(e) => handleCheckerClick(e, rowIndex, cellIndex)}
+                    onClick={(e) => handleCheckerClick(e, rowIndex, colIndex)}
                   >
                     {cell === "b" ? (
                       <img src={bMSvg} alt="Black piece" />
@@ -246,7 +308,7 @@ function Game() {
                       ""
                     )}
                     <p>
-                      {rowIndex} {cellIndex}
+                      {rowIndex} {colIndex}
                     </p>
                   </div>
                 );
@@ -255,6 +317,28 @@ function Game() {
           ))}
         </div>
         <div className="game-config">
+          <div style={{ height: "10%" }}>
+            <p style={{ color: "red" }}>{errorResponse}</p>
+          </div>
+
+          <div>
+            <p>{turn == "w" ? "White's turn" : "Black's turn"}</p>
+            <img
+              src={turn == "w" ? wMSvg : bMSvg}
+              alt={turn == "w" ? "White Piece" : "Black piece"}
+            ></img>
+          </div>
+          <div className="checker-counts">
+            <p>Black checker count: {blackCheckerCount}</p>
+            <p>White checker count: {whiteCheckerCount}</p>
+          </div>
+          {lastMove && (
+            <div className="last-move">
+              <button onClick={() => revertPreviousMove()}>
+                Revert previous move
+              </button>
+            </div>
+          )}
           <div className="board-editor">
             <button
               onClick={() =>

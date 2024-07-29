@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import GameFunctionality from "../Game/GameFunctionality";
 import bMSvg from "../assets/bM.svg"; // Import the SVG files
 import bKSvg from "../assets/bK.svg";
@@ -20,6 +20,9 @@ function BoardEditor() {
   const [board, setBoard] = useState(functionality.decodeBoard(boardString));
   const [turn, setTurn] = useState("w");
   const [lastClicked, setLastClicked] = useState(null);
+  const [isValidBoard, setIsValidBoard] = useState(
+    functionality.isValidBoard(board)
+  );
 
   function handleClick(e, row, col, checkerToAdd = null) {
     removeFocus();
@@ -70,6 +73,10 @@ function BoardEditor() {
     setBoard(functionality.decodeBoard(text));
   };
 
+  useEffect(() => {
+    setIsValidBoard(functionality.isValidBoard(board));
+  }, [board]);
+
   return (
     <div className="game-container">
       <div className="game-screen">
@@ -115,6 +122,9 @@ function BoardEditor() {
               value={functionality.encodeBoard(board)}
               onChange={handleInputChange}
             />
+            <p style={{ color: isValidBoard ? "rgb(158, 249, 158)" : "red" }}>
+              {isValidBoard ? "Board valid" : "Board not valid"}
+            </p>
           </div>
           <div className="pieces-container">
             <div onClick={(e) => handleClick(e, null, null, "b")}>
